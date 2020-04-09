@@ -1,0 +1,5 @@
+profile: function-aws
+defaultPackage: create.user
+---
+testFramework: junit
+sourceLanguage: java
