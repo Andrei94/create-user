@@ -9,5 +9,5 @@ import javax.inject.Named;
 @FunctionClient
 public interface CreateUserClient {
 	@Named("create-user")
-	Single<CreateUser> apply(@Body CreateUser body);
+	Single<CreateUserRequest> apply(@Body CreateUserRequest body);
 }

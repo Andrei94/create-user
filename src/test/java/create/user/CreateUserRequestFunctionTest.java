@@ -8,14 +8,14 @@ import javax.inject.Inject;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest
-public class CreateUserFunctionTest {
+public class CreateUserRequestFunctionTest {
 	@Inject
 	CreateUserClient client;
 
 	@Test
 	public void testFunction() {
-		CreateUser body = new CreateUser();
-		body.setName("create-user");
-		assertEquals("create-user", client.apply(body).blockingGet().getName());
+		CreateUserRequest body = new CreateUserRequest();
+		body.setUsername("username2");
+		assertEquals("Success", client.apply(body).blockingGet().getUsername());
 	}
 }
