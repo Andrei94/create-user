@@ -22,10 +22,7 @@ import java.util.stream.Collectors;
 @FunctionBean("create-user")
 public class CreateUserFunction extends FunctionInitializer implements Function<CreateUserRequest, CreateUserResponse> {
 	private final Logger logger = LoggerFactory.getLogger(CreateUserFunction.class);
-	private final OkHttpClient httpClient = new OkHttpClient.Builder()
-			.connectTimeout(3, TimeUnit.SECONDS)
-			.readTimeout(10, TimeUnit.SECONDS)
-			.build();
+	private final OkHttpClient httpClient = new OkHttpClient();
 
 	@Override
 	public CreateUserResponse apply(CreateUserRequest request) {
