@@ -30,7 +30,7 @@ public class CreateUserFunction extends FunctionInitializer implements Function<
 		String leastUsedInstanceIp = findLeastUsedInstanceIp(getFreeDevicesCountInEndpoints(ipAddresses));
 		CreateUserResponse createUserResponse = new CreateUserResponse();
 		try {
-			String url = "http://" + leastUsedInstanceIp + ":8080" + "/volume/createUser/" + request.getUsername();
+			String url = "https://" + leastUsedInstanceIp + ":8443" + "/volume/createUser/" + request.getUsername();
 			Response response = httpClient.newCall(new Request.Builder().url(url)
 					.put(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), "")).build())
 					.execute();
@@ -56,7 +56,7 @@ public class CreateUserFunction extends FunctionInitializer implements Function<
 	private ConcurrentMap<String, Long> getFreeDevicesCountInEndpoints(List<String> endpoints) {
 		return endpoints.parallelStream().collect(Collectors.toConcurrentMap(endpoint -> endpoint, o -> {
 			try {
-				Response response = httpClient.newCall(new Request.Builder().url("http://" + o + ":8080/freeDevicesCount").get().build()).execute();
+				Response response = httpClient.newCall(new Request.Builder().url("https://" + o + ":8443/freeDevicesCount").get().build()).execute();
 				return Long.parseUnsignedLong(Objects.requireNonNull(response.body()).string());
 			} catch(IOException e) {
 				logger.error("An error occurred", e);
