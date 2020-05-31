@@ -9,30 +9,42 @@ import com.amazonaws.services.ec2.model.Instance;
 import io.micronaut.function.executor.FunctionInitializer;
 import io.micronaut.function.FunctionBean;
 import okhttp3.*;
+import okhttp3.tls.Certificates;
+import okhttp3.tls.HandshakeCertificates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @FunctionBean("create-user")
 public class CreateUserFunction extends FunctionInitializer implements Function<CreateUserRequest, CreateUserResponse> {
 	private final Logger logger = LoggerFactory.getLogger(CreateUserFunction.class);
-	private final OkHttpClient httpClient = new OkHttpClient();
+	private OkHttpClient httpClient;
 
 	@Override
 	public CreateUserResponse apply(CreateUserRequest request) {
+		HandshakeCertificates certificates = new HandshakeCertificates.Builder()
+				.addTrustedCertificate(getBackedupCertificateAuthority())
+				.build();
+
+		httpClient = new OkHttpClient.Builder()
+				.sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
+				.build();
 		List<String> ipAddresses = getIpAddresses();
 		String leastUsedInstanceIp = findLeastUsedInstanceIp(getFreeDevicesCountInEndpoints(ipAddresses));
 		CreateUserResponse createUserResponse = new CreateUserResponse();
 		try {
 			String url = "https://" + leastUsedInstanceIp + ":8443" + "/volume/createUser/" + request.getUsername();
 			Response response = httpClient.newCall(new Request.Builder().url(url)
-					.put(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), "")).build())
+					.put(RequestBody.create("", MediaType.parse("application/json; charset=utf-8"))).build())
 					.execute();
 			String token = Objects.requireNonNull(response.body()).string();
 			createUserResponse.setToken(token);
@@ -40,6 +52,15 @@ public class CreateUserFunction extends FunctionInitializer implements Function<
 			logger.error("An error occurred", e);
 		}
 		return createUserResponse;
+	}
+
+	private X509Certificate getBackedupCertificateAuthority() {
+		try {
+			return Certificates.decodeCertificatePem(new String(Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("backedup.pem").toURI()))));
+		} catch(IOException | URISyntaxException e) {
+			e.printStackTrace();
+		}
+		throw new RuntimeException("Failed to load certificate");
 	}
 
 	private List<String> getIpAddresses() {
